@@ -9,9 +9,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 
@@ -100,12 +101,19 @@ public class ChessView extends JPanel implements MouseListener, MouseMotionListe
 	}
 	
 	private Image loadImage(String imgFileName) throws Exception {
-	
-	    File imgFile = new File("/Users/doviet/eclipse-workspace/ChessProject/res/img/" + imgFileName);
-	    if (!imgFile.exists()) {
-	        return null;
+	    // Thử dùng ClassLoader trước (cho JAR)
+	    InputStream is = getClass().getClassLoader().getResourceAsStream("img/" + imgFileName);
+	    if (is != null) {
+	        return ImageIO.read(is);
 	    }
-	    return ImageIO.read(imgFile);
+	    
+	    // Fallback: dùng đường dẫn file (cho development)
+	    File imgFile = new File("res/img/" + imgFileName);
+	    if (imgFile.exists()) {
+	        return ImageIO.read(imgFile);
+	    }
+	    
+	    throw new FileNotFoundException("Image not found in both resources and file system: " + imgFileName);
 	}
 	
 	private void drawBoard(Graphics2D g2) {

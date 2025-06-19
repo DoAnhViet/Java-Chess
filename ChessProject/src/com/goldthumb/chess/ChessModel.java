@@ -43,47 +43,47 @@ public class ChessModel {
     
     public void movePiece(int fromCol, int fromRow, int toCol, int toRow) {
         ChessPiece movingPiece = pieceAt(fromCol, fromRow);
-        if (movingPiece == null || movingPiece.getPlayer() != playerInTurn) {
-            return;
-        }
+        if (movingPiece == null || movingPiece.getPlayer() != playerInTurn) return;
+        if (!isValidMove(fromCol, fromRow, toCol, toRow)) return;
+        if (!isMoveValidToEscapeCheck(fromCol, fromRow, toCol, toRow)) return;
 
-        if (!isValidMove(fromCol, fromRow, toCol, toRow)) {
-            return;
-        }
-
-        if (!isMoveValidToEscapeCheck(fromCol, fromRow, toCol, toRow)) {
-            return;
-        }
-
-                if (movingPiece.getRank() == Rank.PAWN && 
+        // Xử lý bắt tốt qua đường
+        if (movingPiece.getRank() == Rank.PAWN && 
             Math.abs(fromCol - toCol) == 1 && 
             pieceAt(toCol, toRow) == null) {
-                        piecesBox.remove(pieceAt(toCol, fromRow));
+            piecesBox.remove(pieceAt(toCol, fromRow));
         }
 
-                if (movingPiece.getRank() == Rank.KING && Math.abs(fromCol - toCol) == 2) {
+        // Xử lý nhập thành
+        if (movingPiece.getRank() == Rank.KING && Math.abs(fromCol - toCol) == 2) {
             performCastling(fromCol, fromRow, toCol, toRow);
             switchPlayer();
             return;
         }
 
-                piecesBox.remove(movingPiece);
-        ChessPiece newPiece = movingPiece.withPosition(toCol, toRow);
-        
-                if (newPiece.getRank() == Rank.PAWN && (toRow == 0 || toRow == 7)) {
-            newPiece = newPiece.withPromotion(Rank.QUEEN, 
-                newPiece.getPlayer() == Player.WHITE ? 
-                    ChessConstants.wQueen : ChessConstants.bQueen);
-        }
-        
-        piecesBox.add(newPiece);
-        
-                ChessPiece capturedPiece = pieceAt(toCol, toRow);
-        if (capturedPiece != null && capturedPiece != newPiece) {
+        // Xóa quân bị ăn TRƯỚC
+        ChessPiece capturedPiece = pieceAt(toCol, toRow);
+        if (capturedPiece != null) {
             piecesBox.remove(capturedPiece);
         }
-        
-                if (movingPiece.getRank() == Rank.PAWN && Math.abs(fromRow - toRow) == 2) {
+
+        // Di chuyển quân
+        piecesBox.remove(movingPiece);
+        ChessPiece newPiece = movingPiece.withPosition(toCol, toRow);
+
+        // Phong cấp (chỉ cho Tốt)
+        if (movingPiece.getRank() == Rank.PAWN && (toRow == 0 || toRow == 7)) {
+            newPiece = new ChessPiece(toCol, toRow, 
+                                    movingPiece.getPlayer(), 
+                                    Rank.QUEEN, 
+                                    movingPiece.getPlayer() == Player.WHITE ? 
+                                        ChessConstants.wQueen : ChessConstants.bQueen);
+        }
+
+        piecesBox.add(newPiece);
+
+        // Đánh dấu tốt có thể bắt qua đường
+        if (movingPiece.getRank() == Rank.PAWN && Math.abs(fromRow - toRow) == 2) {
             enPassantVulnerablePawn = newPiece;
         } else {
             enPassantVulnerablePawn = null;
